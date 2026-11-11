@@ -1,10 +1,17 @@
 import {buildApp,db} from './app.js';
 import {config} from './config.js';
 import {processSourceJob} from './sources.js';
+import {processPriorityRecommendations,monitorAcknowledgements} from './incoming-queue.js';
 const app=await buildApp();
 await db.sourceJob.updateMany({where:{status:'RUNNING',updatedAt:{lt:new Date(Date.now()-300000)}},data:{status:'FAILED',error:'Worker interrupted. Review and enqueue collection again.'}});
 let working=false;
 const worker=setInterval(async()=>{if(working)return;working=true;try{await processSourceJob();}catch{app.log.error('Source worker failed; check database availability.');}finally{working=false;}},5000);
 worker.unref();
-for(const signal of ['SIGINT','SIGTERM'])process.on(signal,async()=>{clearInterval(worker);await app.close();await db.$disconnect();process.exit(0);});
+let queueWorking=false;
+const queueWorker=setInterval(async()=>{if(queueWorking)return;queueWorking=true;try{await monitorAcknowledgements();}catch{app.log.error('Incoming queue monitor failed; check database availability.');}finally{queueWorking=false;}},5000);
+queueWorker.unref();
+let assessing=false;
+const assessmentWorker=setInterval(async()=>{if(assessing)return;assessing=true;try{await processPriorityRecommendations();}catch{app.log.error('Clinical protocol assessment failed; referrals remain available for clinical review.');}finally{assessing=false;}},5000);
+assessmentWorker.unref();
+for(const signal of ['SIGINT','SIGTERM'])process.on(signal,async()=>{clearInterval(worker);clearInterval(queueWorker);clearInterval(assessmentWorker);await app.close();await db.$disconnect();process.exit(0);});
 await app.listen({host:config.HOST,port:config.PORT});

@@ -2,6 +2,7 @@ import {z} from 'zod';
 import {db,own,hospitalAdmin,audit,page,type Context,type Actor} from './app.js';
 import {fail} from './security.js';
 import * as c from './contracts.js';
+import {recordArrival,recordAcknowledgement,queueEvent} from './incoming-queue.js';
 export function referralScope(actor:Actor){const h=actor.hospitalId!;return {OR:[{originId:h},...((actor.role==='HOSPITAL_ADMIN'||actor.permissions.includes('REFERRAL_RECEIVE'))?[{destinationId:h,status:{not:'DRAFT' as const}}]:[])]};}
 export async function scopedReferral(actor:Actor,id:string){const referral=await db.referral.findFirst({where:{id,...referralScope(actor)},include:{patient:true,origin:true,destination:true,history:{orderBy:{createdAt:'asc'}},outcome:true}});return referral||fail(404,'Referral not found.');}
 export function referralRoutes({route}:Context){
@@ -34,9 +35,13 @@ export function referralRoutes({route}:Context){
       }
     }
     return db.$transaction(async tx=>{
-      const changed=await tx.referral.updateMany({where:{id:ref.id,version:b.version,status:ref.status},data:{status:b.status,destinationId,version:{increment:1}}});if(changed.count!==1)fail(409,'Referral changed. Reload before continuing.');
+      const [clock]=await tx.$queryRaw<{now:Date}[]>`SELECT clock_timestamp() AS now`;
+      const changed=await tx.referral.updateMany({where:{id:ref.id,version:b.version,status:ref.status},data:{status:b.status,destinationId,version:{increment:1},...(b.status==='SUBMITTED'?{submittedAt:clock.now}:{})}});if(changed.count!==1)fail(409,'Referral changed. Reload before continuing.');
+      if(b.status==='SUBMITTED')await recordArrival(tx,{...ref,destinationId},r.actor);
+      if(['ACCEPTED','REJECTED'].includes(b.status))await recordAcknowledgement(tx,ref,r.actor);
+      await queueEvent(tx,ref.id,'STATUS_CHANGED',b.reason||`Referral moved from ${ref.status} to ${b.status}.`,r.actor.id,{details:{from:ref.status,to:b.status}});
       await tx.referralHistory.create({data:{referralId:ref.id,status:b.status,reason:b.reason,actorId:r.actor.id}});
-      if(snapshot)await tx.operationalUpdate.create({data:{hospitalId:ref.originId,category:'REFERRAL_SNAPSHOT',content:snapshot,source:ref.id,createdBy:r.actor.id}});
+      if(snapshot){const local=new Date(clock.now.getTime()+3*3600000);await tx.operationalUpdate.create({data:{hospitalId:ref.originId,category:'REFERRAL_SNAPSHOT',content:{...snapshot,submitted_at:clock.now.toISOString(),submission_hour:local.getUTCHours(),submission_day:['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][local.getUTCDay()]},source:ref.id,createdBy:r.actor.id}});}
       const target=h===ref.originId?destinationId:ref.originId;
       if(target)await tx.notification.create({data:{hospitalId:target,referralId:ref.id,message:`Referral ${ref.id}: ${b.status}`}});
       await audit(r.actor,'REFERRAL_'+b.status,ref.id,tx);return {referral:await tx.referral.findUnique({where:{id:ref.id}})};

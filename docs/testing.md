@@ -115,3 +115,12 @@ For live verification, use the same isolated stack and set `REFHEALTH_LIVE_WORKS
 ## Acceptance boundaries
 
 Software correctness tests do not establish clinical validity. Live provider availability must be rechecked for each deployment; Facebook/Telegram authorizations, production container builds, hosting credentials, backup restoration, load/penetration tests and professional model acceptance still need environment-specific validation. Deployment remains a separate operational acceptance step.
+
+
+## Incoming queue verification (November 11)
+
+Apply `202611110002_incoming_queue` to an isolated `coecare_test` database. Run the backend suite with the service-authenticated FastAPI service running; `incoming-queue.test.ts` covers exact receipt events, immutable timestamps, the five-referral priority/arrival example, pagination and filters, clinical-role checks, mandatory reasons, concurrent reviews, deadline boundaries, idempotent escalation, acknowledgement, rejection/cancellation/completion, unknown legacy receipt times and AI failure handling. Synthetic protocol rules exist only in disposable tests; they are not clinical evidence and are never loaded into the application database.
+
+Run Python `python -m unittest discover -s tests -p 'test_*.py'` and frontend `npm test`. The rules-engine tests verify missing observations, units, rule precedence, authentication, and rejection of patient-identity/operational-prediction inputs. Frontend tests verify permission-dependent actions, disabled recommendations, local-time filters, priority review and server-side filtering.
+
+Set `REFHEALTH_QUEUE_BROWSER_TEST=1`, `DATABASE_URL` to the isolated coecare_test schema, and `PLAYWRIGHT_BASE_URL` to the isolated frontend, then run `npx playwright test tests/incoming-queue.spec.ts`. It creates synthetic hospital users, grants clinical permission through the authorized API, configures operational policy through the UI, receives referrals, confirms priorities, checks live ordering/filtering/audit/acknowledgement, completes the referral workflow, checks reload persistence and automatic arrival refresh, and captures desktop/390px screenshots in `.local/incoming-queue/`. It preserves the rule forbidding self-granted membership changes.

@@ -15,6 +15,7 @@ import { authRoutes } from './auth.js';
 import { hospitalRoutes } from './hospitals.js';
 import { referralRoutes } from './referrals.js';
 import { intelligenceRoutes } from './intelligence.js';
+import { incomingQueueRoutes } from './incoming-queue.js';
 export const db = new PrismaClient();
 export type Actor = {id:string;name:string;email:string;role:string;hospitalId:string|null;permissions:string[];sessionId:string};
 declare module 'fastify' { interface FastifyRequest { actor:Actor } }
@@ -47,7 +48,7 @@ function router(app:FastifyInstance) {
   };
 }
 export async function buildApp() {
-  const app=Fastify({logger:config.NODE_ENV==='test'?false:{redact:['req.headers.authorization','req.headers.cookie','res.headers["set-cookie"]']},bodyLimit:1024*1024});
+  const app=Fastify({ajv:{customOptions:{removeAdditional:false}},logger:config.NODE_ENV==='test'?false:{redact:['req.headers.authorization','req.headers.cookie','res.headers["set-cookie"]']},bodyLimit:1024*1024});
   await app.register(cookie);
   await app.register(cors,{origin:trustedOrigins,credentials:true});
   await app.register(helmet);
@@ -71,6 +72,6 @@ export async function buildApp() {
   });
   const context={app,route:router(app)};
   context.route('GET','/health','Database readiness',null,async()=>{await db.$queryRaw`SELECT 1`;return {status:'ok'};},'public');
-  authRoutes(context);hospitalRoutes(context);referralRoutes(context);intelligenceRoutes(context);
+  authRoutes(context);hospitalRoutes(context);referralRoutes(context);incomingQueueRoutes(context);intelligenceRoutes(context);
   return app;
 }

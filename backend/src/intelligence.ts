@@ -32,7 +32,7 @@ export function intelligenceRoutes({route}:Context){
     const exported=[];
     for(const row of records){
       if(query.kind==='daily')exported.push({id:row.id,payload:row.content,source_reference:row.source,verified_by:row.createdBy,verified_at:row.createdAt.toISOString()});
-      else{const referral=await db.referral.findUnique({where:{id:row.source},include:{outcome:true,history:{where:{status:{in:['ACCEPTED','REJECTED']}},orderBy:{createdAt:'asc'},take:1}}});if(referral?.outcome?.verifiedAt&&referral.history[0])exported.push({id:row.id,payload:row.content,acknowledged_at:referral.history[0].createdAt.toISOString(),verified_by:referral.outcome.verifiedBy,verified_at:referral.outcome.verifiedAt.toISOString()});}
+      else{const referral=await db.referral.findUnique({where:{id:row.source},include:{outcome:true}});if(referral?.outcome?.verifiedAt&&referral.acknowledgedAt)exported.push({id:row.id,payload:row.content,acknowledged_at:referral.acknowledgedAt.toISOString(),verified_by:referral.outcome.verifiedBy,verified_at:referral.outcome.verifiedAt.toISOString()});}
     }
     return {records:exported,nextCursor:records.length===100?records[records.length-1].id:null};
   },'public');

@@ -49,6 +49,8 @@ app = FastAPI(title="RefHealth AI", version="2.0.0",
 
 from corecare.integration import router as integration_router
 app.include_router(integration_router)
+from corecare.clinical_priority import router as clinical_priority_router
+app.include_router(clinical_priority_router)
 
 
 @app.exception_handler(RequestValidationError)

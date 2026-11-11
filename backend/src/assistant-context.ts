@@ -56,7 +56,7 @@ export async function assistantContext(actor:Actor,referralId?:string):Promise<A
     }
     documents.push(doc('system:workspace:access','workspace','Current workspace permissions',{
       hospital_name:ownHospital?.name,role:actor.role,permissions:actor.permissions,scope:'This signed-in hospital workspace only; no platform-wide private records.',
-      capabilities:{manage_hospital_profile:admin,manage_team:admin,manage_external_sources:admin,review_knowledge:admin||actor.permissions.includes('KNOWLEDGE_REVIEW'),create_and_send_referrals:true,receive_referrals:canReceive,view_own_hospital_predictions:true,system_administration:false},
+      capabilities:{manage_hospital_profile:admin,manage_team:admin,manage_external_sources:admin,review_knowledge:admin||actor.permissions.includes('KNOWLEDGE_REVIEW'),create_and_send_referrals:true,receive_referrals:canReceive,assign_clinical_priority:canReceive&&actor.permissions.includes('REFERRAL_TRIAGE'),configure_queue_policy:admin,view_own_hospital_predictions:true,system_administration:false},
       privacy:'No patient identities, clinical summaries, account credentials, session tokens, staff identities or other users conversations are supplied. Private data from other hospitals is excluded.',
       limits:{knowledge_records_available:knowledgeTotal,knowledge_records_supplied:records.length,knowledge_window:'Up to 300 most recently updated authorized approved records; this is not the entire knowledge database.',referral_details:'Select a Referral ID to discuss its authorized patient-free status and prediction context.',actions:'Chat explains; it cannot edit records, approve hospitals, send referrals or train models.'},
     }));
@@ -65,10 +65,21 @@ export async function assistantContext(actor:Actor,referralId?:string):Promise<A
       tx.referral.count({where:{AND:[scope,{updatedAt:{gte:today,lt:endToday}}]}}),
       tx.referralOutcome.count({where:{verifiedAt:{not:null},referral:scope}}),
     ]);
+    let incomingQueue:Record<string,unknown>|null=null;
+    if(canReceive){
+      const active={destinationId:hospitalId,status:{in:['SUBMITTED','ACCEPTED','IN_PROGRESS'] as const}};
+      const [priorities,overdue,queuePolicy]=await Promise.all([
+        tx.referral.groupBy({by:['confirmedPriority'],where:{...active,status:{in:[...active.status.in]}},_count:true}),
+        tx.referral.count({where:{destinationId:hospitalId,status:'SUBMITTED',acknowledgedAt:null,acknowledgementDueAt:{lte:new Date(asOf)}}}),
+        tx.queuePolicy.findUnique({where:{hospitalId},select:{timezone:true,protocol:true}}),
+      ]);
+      incomingQueue={active_by_confirmed_priority:priorities.map(p=>({priority:p.confirmedPriority??'CLINICAL_REVIEW_REQUIRED',count:p._count})),acknowledgement_overdue:overdue,timezone:queuePolicy?.timezone??'Africa/Nairobi',automatic_recommendations:queuePolicy?.protocol?'Approved protocol configured; clinician confirmation is still required.':'Disabled: no approved, clinically validated protocol supplied.',ordering:'Clinician-confirmed Critical, High, Medium, Low; earliest recorded receipt first within each priority. Unassigned referrals are flagged for clinical review. Unknown historical arrival times are never guessed.'};
+    }
     documents.push(doc('system:workspace:activity','workspace','Live authorized referral and prediction totals',{
       as_of:asOf,hospital_name:ownHospital?.name,scope:canReceive?'Outgoing referrals plus non-draft incoming referrals.':'Outgoing referrals only; incoming referrals require receiving permission.',
       all_time:{referrals_by_status:counts(referrals),visible_referrals:referrals.reduce((n,r)=>n+r._count,0),outgoing,incoming,verified_outcomes:verifiedOutcomes,predictions_by_component:predictions.map(p=>({component:p.component,count:p._count}))},
       today:{timezone:'UTC+03:00',from:today.toISOString(),until:endToday.toISOString(),created:createdToday,updated:updatedToday},
+      incoming_queue:incomingQueue,
       definitions:{pending:'SUBMITTED means awaiting a receiving decision; DRAFT is not sent.',updated_today:'Distinct visible records last updated today, not an audit-event count.',incoming:canReceive?'Non-draft incoming referrals visible to this role.':'Not authorized; null is not zero.'},
       workload_data:{verified_daily_record_count:daily,latest_record_saved_at:latestDaily?.createdAt.toISOString()??null,requirement:'Forecasting needs seven consecutive verified completed-day records and an approved real-data model; a total count alone does not establish readiness.'},
     }));
@@ -108,7 +119,7 @@ export async function assistantContext(actor:Actor,referralId?:string):Promise<A
     return documents;
   },{isolationLevel:'RepeatableRead',timeout:15000});
   documents.push(doc('system:workspace:guide','workspace','RefHealth application workflow guide',{
-    navigation:{overview:'Referral totals and workload observations',directory:'Hospital network: approved hospitals and shared capacity',referrals:'Create a patient record and draft referral, review eligible hospitals, select a destination and submit; the receiving hospital accepts/rejects, starts care and records completion/outcomes.',intelligence:'View saved predictions, request a workload forecast, submit feedback, inspect model and verified-outcome metrics.',knowledge:'Propose operational knowledge; an authorized reviewer must approve it before the assistant uses it as evidence.',administration:'Hospital administrators use Hospital profile, Operations, Team & permissions and External sources.'},
+    navigation:{overview:'Referral totals and workload observations',directory:'Hospital network: approved hospitals and shared capacity',referrals:'Create a patient record and draft referral, review eligible hospitals, select a destination and submit; the receiving hospital accepts/rejects, starts care and records completion/outcomes.',incoming_queue:'Incoming queue: record receipt, acknowledge separately from acceptance, review confirmed priority and arrival ordering, monitor configured deadlines and review audit history. REFERRAL_TRIAGE is required for all clinical priority reviewers, including administrators. Automatic recommendations are disabled without an approved, clinically validated protocol.',intelligence:'View saved predictions, request a workload forecast, submit feedback, inspect model and verified-outcome metrics.',knowledge:'Propose operational knowledge; an authorized reviewer must approve it before the assistant uses it as evidence.',administration:'Hospital administrators use Hospital profile, Operations, Team & permissions and External sources.'},
     access:'Hospital administrators manage their hospital. Workers create/send referrals; receiving requires REFERRAL_RECEIVE, reviewing knowledge requires KNOWLEDGE_REVIEW. System administrators approve registrations and manage platform access in a separate workspace.',
     recovery:'Use Forgot password, then contact the platform administrator to verify identity and receive a single-use reset token. Existing passwords cannot be retrieved.',
     integrations:'Permitted public website/feed collection must be authorized by a hospital administrator. Facebook and Telegram collection is not configured merely by registering a URL.',

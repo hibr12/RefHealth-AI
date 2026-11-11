@@ -505,7 +505,7 @@ def _retrieval_context(request):
     # Sending every administrative/model record on each simple bed question wastes
     # the provider's token quota and makes otherwise valid follow-ups fail.
     sections = {"access", "selected-referral"}
-    if re.search(r"referral|pending|today|activity|outcome|prediction|forecast|workload|daily|record", topic):
+    if re.search(r"referral|queue|priority|acknowledg|overdue|arrival|pending|today|activity|outcome|prediction|forecast|workload|daily|record", topic):
         sections.update({"activity", "forecast"})
     if re.search(r"team|staff|member|worker|admin|proposal|review|knowledge|source|collection|audit|event|pending", topic):
         sections.update({"administration", "review"})

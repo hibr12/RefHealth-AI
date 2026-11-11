@@ -1,3 +1,4 @@
+import {referralScope} from './referrals.js';
 import {z} from 'zod';
 import {db,own,hospitalAdmin,audit,page,type Context} from './app.js';
 import {fail,hashPassword} from './security.js';
@@ -58,7 +59,7 @@ export function hospitalRoutes({route}:Context){
     hospitalAdmin(r);const {permissions,password,...data}=b;const passwordHash=await hashPassword(password);
     const user=await db.$transaction(async tx=>{const u=await tx.user.create({data:{...data,passwordHash,active:true,memberships:{create:{hospitalId:own(r),permissions}}},select:{id:true,email:true,name:true,role:true}});await audit(r.actor,'MEMBER_ADDED',u.id,tx);return u;});return {user};
   });
-  route('PATCH','/workspace/users/:id','Change hospital membership permissions',z.object({active:z.boolean(),permissions:z.array(z.enum(['REFERRAL_RECEIVE','KNOWLEDGE_REVIEW']))}),async(r,b)=>{
+  route('PATCH','/workspace/users/:id','Change hospital membership permissions',z.object({active:z.boolean(),permissions:z.array(z.enum(['REFERRAL_RECEIVE','REFERRAL_TRIAGE','KNOWLEDGE_REVIEW']))}),async(r,b)=>{
     hospitalAdmin(r);const userId=(r.params as any).id;if(userId===r.actor.id)fail(409,'Cannot change your own membership.');
     await db.$transaction(async tx=>{await tx.membership.update({where:{hospitalId_userId:{hospitalId:own(r),userId}},data:b});await audit(r.actor,'MEMBERSHIP_UPDATED',userId,tx);});return {success:true};
   });
@@ -74,7 +75,11 @@ export function hospitalRoutes({route}:Context){
     return db.$transaction(async tx=>{const pending=await tx.sourceJob.findFirst({where:{sourceId:source!.id,status:{in:['PENDING','RUNNING']}}});if(pending)fail(409,'Collection is already queued.');await tx.externalSource.update({where:{id:source!.id},data:{permissionStatus:'PERMITTED_PUBLIC_ACCESS',status:'COLLECTION_QUEUED'}});const job=await tx.sourceJob.create({data:{sourceId:source!.id,hospitalId:own(r),actorId:r.actor.id}});await audit(r.actor,'PUBLIC_SOURCE_COLLECTION_AUTHORIZED',source!.id,tx);return {job};},{isolationLevel:'Serializable'});
   });
   route('GET','/workspace/source-jobs','Public source collection status',null,async r=>{hospitalAdmin(r);return {jobs:await db.sourceJob.findMany({where:{hospitalId:own(r)},...page(r.query),orderBy:{createdAt:'desc'}})};});
-  route('GET','/workspace/notifications','Referral notifications',null,async r=>({notifications:await db.notification.findMany({where:{hospitalId:own(r)},...page(r.query),orderBy:{createdAt:'desc'}})}));
-  route('POST','/workspace/notifications/:id/read','Mark notification read',null,async r=>{const result=await db.notification.updateMany({where:{id:(r.params as any).id,hospitalId:own(r)},data:{readAt:new Date()}});if(!result.count)fail(404,'Notification not found.');return {success:true};});
+  route('GET','/workspace/notifications','Referral notifications',null,async r=>({notifications:await db.notification.findMany({where:{hospitalId:own(r),OR:[{referralId:null},{referralId:{in:(await db.referral.findMany({where:referralScope(r.actor),select:{id:true}})).map(ref=>ref.id)}}]},...page(r.query),orderBy:{createdAt:'desc'}})}));
+  route('POST','/workspace/notifications/:id/read','Mark an authorized notification read',null,async r=>{
+    const notification=await db.notification.findFirst({where:{id:(r.params as any).id,hospitalId:own(r)}});
+    if(!notification||(notification.referralId&&!await db.referral.count({where:{id:notification.referralId,...referralScope(r.actor)}})))fail(404,'Notification not found.');
+    await db.notification.update({where:{id:notification!.id},data:{readAt:new Date()}});return {success:true};
+  });
   route('GET','/workspace/audit','Own hospital audit trail',null,async r=>{hospitalAdmin(r);return {events:await db.auditLog.findMany({where:{hospitalId:own(r)},...page(r.query),orderBy:{createdAt:'desc'}})};});
 }

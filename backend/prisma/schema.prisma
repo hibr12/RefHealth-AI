@@ -26,6 +26,12 @@ enum ReferralStatus {
   COMPLETED
   CANCELLED
 }
+enum ClinicalPriority {
+  CRITICAL
+  HIGH
+  MEDIUM
+  LOW
+}
 enum Visibility {
   PUBLIC
   SHARED
@@ -107,6 +113,7 @@ model Hospital {
   knowledge KnowledgeRecord[]
   sources ExternalSource[]
   notifications Notification[]
+  queuePolicy QueuePolicy?
   @@index([status,location])
 }
 model Department {
@@ -185,6 +192,24 @@ model Referral {
   requiredSpecialty String?
   clinicalSummary String
   urgency String
+  clinicalObservations Json @default("{}")
+  submittedAt DateTime? @db.Timestamptz(3)
+  receivedAt DateTime? @db.Timestamptz(3)
+  acknowledgedAt DateTime? @db.Timestamptz(3)
+  acknowledgedBy String?
+  aiPriority ClinicalPriority?
+  confirmedPriority ClinicalPriority?
+  priorityRank Int @default(4)
+  priorityExplanation String @default("Clinical review required; no approved protocol has been applied.")
+  assessmentStatus String @default("PENDING")
+  assessedAt DateTime? @db.Timestamptz(3)
+  confirmedBy String?
+  confirmedAt DateTime? @db.Timestamptz(3)
+  queuePolicySnapshot Json @default("{}")
+  acknowledgementDueAt DateTime? @db.Timestamptz(3)
+  acknowledgementWarningAt DateTime? @db.Timestamptz(3)
+  warningNotifiedAt DateTime? @db.Timestamptz(3)
+  overdueNotifiedAt DateTime? @db.Timestamptz(3)
   status ReferralStatus @default(DRAFT)
   createdBy String
   version Int @default(0)
@@ -196,8 +221,36 @@ model Referral {
   history ReferralHistory[]
   outcome ReferralOutcome?
   predictions Prediction[]
+  queueEvents ReferralQueueEvent[]
   @@index([originId,status,createdAt])
   @@index([destinationId,status,createdAt])
+  @@index([destinationId,priorityRank,receivedAt,id])
+  @@index([assessmentStatus,status])
+  @@index([acknowledgedAt,acknowledgementDueAt])
+}
+model QueuePolicy {
+  hospitalId String @id @map("hospital_id")
+  timezone String @default("Africa/Nairobi")
+  deadlines Json @default("{}")
+  emergencyProcedure String @default("")
+  protocol Json?
+  version Int @default(0)
+  updatedBy String
+  updatedAt DateTime @updatedAt
+  hospital Hospital @relation(fields:[hospitalId],references:[id],onDelete:Restrict)
+}
+model ReferralQueueEvent {
+  id String @id @default(uuid())
+  referralId String
+  kind String
+  actorId String?
+  previousPriority ClinicalPriority?
+  priority ClinicalPriority?
+  reason String
+  details Json @default("{}")
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  referral Referral @relation(fields:[referralId],references:[id],onDelete:Restrict)
+  @@index([referralId,createdAt,id])
 }
 model ReferralHistory {
   id String @id @default(uuid())

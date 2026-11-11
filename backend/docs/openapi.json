@@ -2419,6 +2419,7 @@
                       "type": "string",
                       "enum": [
                         "REFERRAL_RECEIVE",
+                        "REFERRAL_TRIAGE",
                         "KNOWLEDGE_REVIEW"
                       ]
                     },
@@ -2529,6 +2530,7 @@
                       "type": "string",
                       "enum": [
                         "REFERRAL_RECEIVE",
+                        "REFERRAL_TRIAGE",
                         "KNOWLEDGE_REVIEW"
                       ]
                     }
@@ -3153,7 +3155,7 @@
     },
     "/workspace/notifications/{id}/read": {
       "post": {
-        "summary": "Mark notification read",
+        "summary": "Mark an authorized notification read",
         "tags": [
           "workspace"
         ],
@@ -3627,6 +3629,57 @@
                       "Urgent",
                       "Emergency"
                     ]
+                  },
+                  "clinicalObservations": {
+                    "type": "object",
+                    "properties": {
+                      "symptoms": {
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 200
+                        },
+                        "maxItems": 50,
+                        "default": []
+                      },
+                      "riskIndicators": {
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 200
+                        },
+                        "maxItems": 50,
+                        "default": []
+                      },
+                      "vitals": {
+                        "type": "object",
+                        "additionalProperties": {
+                          "type": "object",
+                          "properties": {
+                            "value": {
+                              "type": "number"
+                            },
+                            "unit": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 40
+                            }
+                          },
+                          "required": [
+                            "value",
+                            "unit"
+                          ],
+                          "additionalProperties": false
+                        },
+                        "propertyNames": {
+                          "pattern": "^[a-zA-Z][a-zA-Z0-9_]{0,39}$"
+                        },
+                        "default": {}
+                      }
+                    },
+                    "additionalProperties": false
                   }
                 },
                 "required": [
@@ -4139,6 +4192,949 @@
         "summary": "Hospital referral and workload statistics",
         "tags": [
           "workspace"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful JSON result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Successful JSON result",
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Invalid input"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Authentication required"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not authorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Not authorized"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Conflict"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Dependency unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Dependency unavailable"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/incoming/policy": {
+      "get": {
+        "summary": "Receiving hospital queue policy",
+        "tags": [
+          "incoming"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful JSON result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Successful JSON result",
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Invalid input"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Authentication required"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not authorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Not authorized"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Conflict"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Dependency unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Dependency unavailable"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Configure hospital deadlines and approved clinical protocol",
+        "tags": [
+          "incoming"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "version": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "timezone": {
+                    "type": "string",
+                    "maxLength": 100
+                  },
+                  "deadlines": {
+                    "type": "object",
+                    "properties": {
+                      "CRITICAL": {
+                        "type": "object",
+                        "properties": {
+                          "minutes": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 525600
+                          },
+                          "warningMinutes": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 525600
+                          }
+                        },
+                        "required": [
+                          "minutes",
+                          "warningMinutes"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "HIGH": {
+                        "type": "object",
+                        "properties": {
+                          "minutes": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 525600
+                          },
+                          "warningMinutes": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 525600
+                          }
+                        },
+                        "required": [
+                          "minutes",
+                          "warningMinutes"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "MEDIUM": {
+                        "type": "object",
+                        "properties": {
+                          "minutes": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 525600
+                          },
+                          "warningMinutes": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 525600
+                          }
+                        },
+                        "required": [
+                          "minutes",
+                          "warningMinutes"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "LOW": {
+                        "type": "object",
+                        "properties": {
+                          "minutes": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 525600
+                          },
+                          "warningMinutes": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 525600
+                          }
+                        },
+                        "required": [
+                          "minutes",
+                          "warningMinutes"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "REVIEW_REQUIRED": {
+                        "type": "object",
+                        "properties": {
+                          "minutes": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 525600
+                          },
+                          "warningMinutes": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 525600
+                          }
+                        },
+                        "required": [
+                          "minutes",
+                          "warningMinutes"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "emergencyProcedure": {
+                    "type": "string",
+                    "maxLength": 4000
+                  },
+                  "protocol": {
+                    "type": "object",
+                    "properties": {
+                      "name": {
+                        "type": "string",
+                        "minLength": 3,
+                        "maxLength": 200
+                      },
+                      "version": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 100
+                      },
+                      "reference": {
+                        "type": "string",
+                        "minLength": 5,
+                        "maxLength": 1000
+                      },
+                      "approvedBy": {
+                        "type": "string",
+                        "minLength": 3,
+                        "maxLength": 200
+                      },
+                      "clinicalValidationReference": {
+                        "type": "string",
+                        "minLength": 5,
+                        "maxLength": 1000
+                      },
+                      "approvedAt": {
+                        "type": "string",
+                        "format": "date-time"
+                      },
+                      "approvalAttested": {
+                        "type": "boolean",
+                        "enum": [
+                          true
+                        ]
+                      },
+                      "requiredFields": {
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "pattern": "^(urgency|requiredService|requiredSpecialty|symptoms|riskIndicators|vitals\\.[a-zA-Z][a-zA-Z0-9_]{0,39})$"
+                        },
+                        "minItems": 1,
+                        "maxItems": 40
+                      },
+                      "rules": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 80
+                            },
+                            "priority": {
+                              "type": "string",
+                              "enum": [
+                                "CRITICAL",
+                                "HIGH",
+                                "MEDIUM",
+                                "LOW"
+                              ]
+                            },
+                            "explanation": {
+                              "type": "string",
+                              "minLength": 5,
+                              "maxLength": 1000
+                            },
+                            "conditions": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "field": {
+                                    "type": "string",
+                                    "pattern": "^(urgency|requiredService|requiredSpecialty|symptoms|riskIndicators|vitals\\.[a-zA-Z][a-zA-Z0-9_]{0,39})$"
+                                  },
+                                  "operator": {
+                                    "type": "string",
+                                    "enum": [
+                                      "equals",
+                                      "contains",
+                                      "gte",
+                                      "lte"
+                                    ]
+                                  },
+                                  "value": {
+                                    "anyOf": [
+                                      {
+                                        "type": "string",
+                                        "minLength": 1,
+                                        "maxLength": 200
+                                      },
+                                      {
+                                        "type": "number"
+                                      }
+                                    ]
+                                  },
+                                  "unit": {
+                                    "type": "string",
+                                    "minLength": 1,
+                                    "maxLength": 40
+                                  }
+                                },
+                                "required": [
+                                  "field",
+                                  "operator",
+                                  "value"
+                                ],
+                                "additionalProperties": false
+                              },
+                              "minItems": 1,
+                              "maxItems": 20
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "priority",
+                            "explanation",
+                            "conditions"
+                          ],
+                          "additionalProperties": false
+                        },
+                        "minItems": 1,
+                        "maxItems": 100
+                      }
+                    },
+                    "required": [
+                      "name",
+                      "version",
+                      "reference",
+                      "approvedBy",
+                      "clinicalValidationReference",
+                      "approvedAt",
+                      "approvalAttested",
+                      "requiredFields",
+                      "rules"
+                    ],
+                    "additionalProperties": false,
+                    "nullable": true
+                  }
+                },
+                "required": [
+                  "version",
+                  "timezone",
+                  "deadlines",
+                  "emergencyProcedure",
+                  "protocol"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful JSON result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Successful JSON result",
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Invalid input"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Authentication required"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not authorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Not authorized"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Conflict"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Dependency unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Dependency unavailable"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/incoming": {
+      "get": {
+        "summary": "Incoming referrals ordered by clinical priority then receipt time",
+        "tags": [
+          "incoming"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful JSON result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Successful JSON result",
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Invalid input"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Authentication required"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not authorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Not authorized"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Conflict"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Dependency unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Dependency unavailable"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/incoming/{id}/acknowledge": {
+      "post": {
+        "summary": "Acknowledge receipt independently of acceptance",
+        "tags": [
+          "incoming"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "version": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                },
+                "required": [
+                  "version"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful JSON result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Successful JSON result",
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Invalid input"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Authentication required"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not authorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Not authorized"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Conflict"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Dependency unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Dependency unavailable"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/incoming/{id}/priority": {
+      "post": {
+        "summary": "Confirm or override clinical priority with a reason",
+        "tags": [
+          "incoming"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "priority": {
+                    "type": "string",
+                    "enum": [
+                      "CRITICAL",
+                      "HIGH",
+                      "MEDIUM",
+                      "LOW"
+                    ]
+                  },
+                  "reason": {
+                    "type": "string",
+                    "minLength": 5,
+                    "maxLength": 2000
+                  },
+                  "version": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                },
+                "required": [
+                  "priority",
+                  "reason",
+                  "version"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful JSON result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Successful JSON result",
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Invalid input"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Authentication required"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not authorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Not authorized"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Conflict"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Dependency unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Dependency unavailable"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/incoming/{id}/recommendation": {
+      "post": {
+        "summary": "Reassess using the current approved hospital protocol",
+        "tags": [
+          "incoming"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "version": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                },
+                "required": [
+                  "version"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful JSON result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Successful JSON result",
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Invalid input"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Authentication required"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not authorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Not authorized"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Conflict"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Dependency unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Dependency unavailable"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/incoming/{id}/events": {
+      "get": {
+        "summary": "Receiving hospital priority, arrival, acknowledgement and escalation audit",
+        "tags": [
+          "incoming"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
         ],
         "security": [
           {

@@ -43,3 +43,10 @@ The browser test registers a hospital, signs in as the platform administrator, a
 The opt-in `tests/assistant-live.spec.ts` verifies real Gemini retrieval and Groq responses through the browser, with citations, history and saved replies. It is skipped by default. See [live assistant test setup](../docs/testing.md#optional-live-assistant-verification) for the required isolated stack and environment variables.
 
 `tests/assistant-media-live.spec.ts` separately checks real image interpretation, visual follow-ups, audio uploads, Chrome microphone capture from a public speech fixture, transcript persistence and browser playback controls. See [live media verification](../docs/testing.md#optional-live-media-verification).
+
+
+## Incoming referrals
+
+Open **Incoming queue** in a receiving hospital workspace. Confirmed clinical priority and exact receipt time determine the default order. Use the review filter to find unassigned referrals, expand **Review priority & audit** to assess them, enter a reason, and save a priority. Clinical reviewers require REFERRAL_TRIAGE; workers also require REFERRAL_RECEIVE. Hospital administrators grant permissions to authorized colleagues through Team & permissions. Existing accounts are not automatically granted clinical permissions.
+
+**Acknowledge receipt** records a handoff independently of accepting a referral. Use **Open referral workflow** to accept/reject, start care and complete the referral. Administrators configure local timezone, deadline/warning intervals and the approved emergency procedure in **Hospital queue policy**. Deadlines are disabled until supplied, and automatic clinical recommendations remain disabled until an officially approved and validated protocol is provided. The interface updates every ten seconds and preserves unknown arrival times on historical referrals.

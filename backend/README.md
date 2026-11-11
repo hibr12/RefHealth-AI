@@ -69,3 +69,38 @@ npm test
 ```
 
 Tests create uniquely named synthetic hospitals and patients and retain them in the disposable database for inspection. They never delete or reset a database. Do not point these tests at production. The application has a global per-process rate limit; scale behind an appropriate shared ingress rate limiter.
+
+
+## Incoming referral queue
+
+Migration `202611110002_incoming_queue` adds separate UTC `submittedAt`, `receivedAt`, and `acknowledgedAt` fields, clinical observations, recommendation/confirmation metadata, a hospital queue policy, and immutable-by-API queue audit events. `receivedAt` is generated from the database server clock after submission is written and before the atomic destination-delivery transaction commits. Failed deliveries roll back both events. It represents delivery into the receiving workspace in this single-database architecture, not patient arrival at the hospital. Receipt and submission timestamps cannot be rewritten after being set (database trigger). Historical receipt times remain NULL rather than being inferred from creation/submission. Historical submission/acceptance/rejection events provide the only timestamp backfill evidence.
+
+The queue uses **confirmed priority only**: Critical, High, Medium, Low, then unassigned; earliest `receivedAt` and then referral ID break ties. Unassigned referrals remain explicitly flagged, with a dedicated review count/filter. Unknown historical receipt times sort last within their priority. Alternative arrival/wait views are explicitly labeled. AI suggestions never change queue order until a clinician confirms a priority.
+
+Hospital administrators and workers with `REFERRAL_RECEIVE` can open the queue, acknowledge and inspect its audit events. **All clinical reviewers, including administrators, additionally require `REFERRAL_TRIAGE`.** Administrators grant it to authorized colleagues through Team & permissions; existing permissions and the prohibition on changing one's own membership are preserved. Workers need both permissions. Configuration remains hospital-administrator-only. System administrators have no patient-queue access.
+
+| Method | Endpoint | Purpose |
+|---|---|---|
+| GET | `/incoming` | Paginated receiving-hospital queue, server time, review count, filter choices, own workload forecast and selected-destination delay predictions |
+| GET | `/incoming/policy` | Hospital timezone, deadlines, emergency procedure, clinical protocol status |
+| POST | `/incoming/policy` | Replace policy using its current `version`; retain an audited revision |
+| POST | `/incoming/:id/acknowledge` | `{version}`; acknowledge independently of acceptance; repeated acknowledgement is idempotent |
+| POST | `/incoming/:id/priority` | `{version, priority, reason}`; confirm/override with a nonblank reason of at least five characters |
+| POST | `/incoming/:id/recommendation` | `{version}`; future approved-protocol assessment, requiring clinical-review permission |
+| GET | `/incoming/:id/events` | Authorized, paginated arrival/priority/acknowledgement/escalation/status evidence |
+
+`GET /incoming` accepts `page`, `limit` (1?100), `priority` (CRITICAL/HIGH/MEDIUM/LOW/REVIEW_REQUIRED), `review=true`, `originId`, `service`, `status` (active by default, or a status/ALL), `acknowledged=yes|no`, `overdue=true`, `arrivedFrom`, `arrivedTo` (ISO timestamps with offset), `minWaitingMinutes`, and `sort=priority|arrival|waiting`. Waiting sort/minimum-wait filters apply to unacknowledged SUBMITTED referrals. Default ordering is applied before pagination. Completed/rejected/cancelled referrals are removed from the active queue but retain their timestamps and audit trail.
+
+Policies contain `timezone` (IANA name; initial workspace convention Africa/Nairobi), `deadlines`, `emergencyProcedure`, `protocol` (null by default), and `version`. `deadlines` maps selected priority names or REVIEW_REQUIRED to `{minutes, warningMinutes}`. The warning lead cannot exceed the deadline. No universal deadlines are seeded. A policy snapshot is retained at receipt, so changing a policy affects future arrivals. Clinical priority changes recalculate the deadline from the original receipt using that snapshot, never restarting the waiting clock. Unknown receipt/no configured deadline means no invented deadline.
+
+The server checks acknowledgement deadlines every five seconds independently of optional AI processing, emits at most one approaching and one overdue notification per referral, and records the reason/policy/deadline in queue events. Overdue supersedes an unissued approaching warning. Acknowledged or closed referrals stop escalation. Alerts never change clinical priority. Browser queries refresh every ten seconds without a page reload; counters use backend time and hospital-local display. Notifications are filtered by actual referral access.
+
+### Clinical recommendation boundary
+
+**No approved and clinically validated protocol was provided. Automatic clinical recommendations are disabled in existing hospitals.** No clinical rules, thresholds, model, or operational deadlines were invented or installed. Clinicians assign priorities now. Patient urgency and free-text summaries remain visible for human review.
+
+The future FastAPI `/integration/clinical-priority` adapter is service-authenticated and stateless. It executes a hospital-supplied deterministic protocol, not an LLM. A protocol requires name, version, reference, approval authority/date, `approvalAttested: true`, `clinicalValidationReference`, required structured fields, and rules. Each rule has an ID, priority, explanation and a conjunction of typed conditions. Fields are urgency, service, specialty, structured symptoms/risk indicators, or named vitals with explicit units. Operators are categorical equality/list membership or numeric equality/gte/lte. No natural-language symptom parsing or arbitrary executable expressions are supported. All referenced fields must be present and units must match; missing information/no matched rule returns clinical-review-required, never a default LOW. The highest matching recommendation is explained and saved separately from confirmation. **Approval metadata is evidence supplied by the institution, not software certification of clinical validity.** Clinical governance must validate the protocol and its implementation before configuring it for real care.
+
+Optional referral creation field `clinicalObservations` contains `symptoms: string[]`, `riskIndicators: string[]`, and `vitals: {name: {value: number, unit: string}}`. The local rules service receives these minimized observations/service/urgency and the approved protocol; no patient name, identifier or free-text clinical narrative is sent to it or any LLM. An AI timeout/invalid response leaves the referral saved and explicitly requiring review, preserves any confirmed priority, and records failure evidence. An authorized reviewer can retry later. Restarted workers pick up pending recommendations; a five-second service timeout cannot block acknowledgement monitoring. No existing delay/workload model is repurposed as a clinical urgency model.
+
+Operational delay estimates and workload forecasts are displayed separately, with timestamps/unavailability. The learning export uses actual acknowledgement time, including acknowledgement before acceptance, while preserving historical evidence. The assistant receives only permission-scoped aggregate queue counts and capabilities, not patient details or clinical audit narratives.
