@@ -1,0 +1,363 @@
+generator client {
+  provider = "prisma-client-js"
+  output = "../generated/prisma"
+}
+datasource db {
+  provider = "postgresql"
+  url = env("DATABASE_URL")
+}
+enum Role {
+  SYSTEM_ADMIN
+  HOSPITAL_ADMIN
+  HEALTHCARE_WORKER
+}
+enum HospitalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  SUSPENDED
+}
+enum ReferralStatus {
+  DRAFT
+  SUBMITTED
+  ACCEPTED
+  REJECTED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+enum Visibility {
+  PUBLIC
+  SHARED
+  PRIVATE
+}
+enum Approval {
+  PENDING
+  APPROVED
+  REJECTED
+}
+model User {
+  id String @id @default(uuid())
+  email String @unique
+  name String
+  passwordHash String
+  role Role
+  active Boolean @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  memberships Membership[]
+  sessions Session[]
+  tokens AccountToken[]
+}
+model Membership {
+  id String @id @default(uuid())
+  hospitalId String @map("hospital_id")
+  userId String
+  permissions String[] @default([])
+  active Boolean @default(true)
+  hospital Hospital @relation(fields:[hospitalId],references:[id],onDelete:Restrict)
+  user User @relation(fields:[userId],references:[id],onDelete:Restrict)
+  @@unique([hospitalId,userId])
+  @@index([userId])
+}
+model Session {
+  id String @id @default(uuid())
+  userId String
+  tokenHash String @unique
+  expiresAt DateTime
+  revokedAt DateTime?
+  user User @relation(fields:[userId],references:[id],onDelete:Cascade)
+  @@index([userId])
+}
+model AccountToken {
+  id String @id @default(uuid())
+  userId String
+  tokenHash String @unique
+  purpose String
+  expiresAt DateTime
+  usedAt DateTime?
+  user User @relation(fields:[userId],references:[id],onDelete:Cascade)
+}
+model Hospital {
+  id String @id @default(uuid())
+  name String
+  registrationNumber String @unique
+  location String
+  latitude Float?
+  longitude Float?
+  phone String
+  email String
+  operatingHours String @default("")
+  status HospitalStatus @default(PENDING)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  memberships Membership[]
+  departments Department[]
+  specialties Specialty[]
+  services Service[]
+  equipment Equipment[]
+  capacity Capacity?
+  operations OperationalUpdate[]
+  patients Patient[]
+  outgoing Referral[] @relation("origin")
+  incoming Referral[] @relation("destination")
+  predictions Prediction[]
+  conversations Conversation[]
+  chatThreads ChatThread[]
+  knowledge KnowledgeRecord[]
+  sources ExternalSource[]
+  notifications Notification[]
+  @@index([status,location])
+}
+model Department {
+  id String @id @default(uuid())
+  hospitalId String @map("hospital_id")
+  name String
+  hospital Hospital @relation(fields:[hospitalId],references:[id],onDelete:Cascade)
+  @@unique([hospitalId,name])
+}
+model Specialty {
+  id String @id @default(uuid())
+  hospitalId String @map("hospital_id")
+  name String
+  hospital Hospital @relation(fields:[hospitalId],references:[id],onDelete:Cascade)
+  @@unique([hospitalId,name])
+}
+model Service {
+  id String @id @default(uuid())
+  hospitalId String @map("hospital_id")
+  name String
+  available Boolean @default(true)
+  updatedAt DateTime @updatedAt
+  hospital Hospital @relation(fields:[hospitalId],references:[id],onDelete:Cascade)
+  @@unique([hospitalId,name])
+}
+model Equipment {
+  id String @id @default(uuid())
+  hospitalId String @map("hospital_id")
+  name String
+  available Boolean @default(true)
+  updatedAt DateTime @updatedAt
+  hospital Hospital @relation(fields:[hospitalId],references:[id],onDelete:Cascade)
+  @@unique([hospitalId,name])
+}
+model Capacity {
+  hospitalId String @id @map("hospital_id")
+  totalBeds Int
+  availableBeds Int
+  staffOnDuty Int
+  workload String
+  updatedBy String
+  shared Boolean @default(false)
+  updatedAt DateTime @updatedAt
+  hospital Hospital @relation(fields:[hospitalId],references:[id],onDelete:Cascade)
+}
+model OperationalUpdate {
+  id String @id @default(uuid())
+  hospitalId String @map("hospital_id")
+  category String
+  content Json
+  visibility Visibility @default(PRIVATE)
+  source String
+  createdBy String
+  createdAt DateTime @default(now())
+  hospital Hospital @relation(fields:[hospitalId],references:[id],onDelete:Restrict)
+  @@index([hospitalId,createdAt])
+}
+model Patient {
+  id String @id @default(uuid())
+  hospitalId String @map("hospital_id")
+  identifier String
+  name String
+  age Int
+  sex String
+  createdAt DateTime @default(now())
+  hospital Hospital @relation(fields:[hospitalId],references:[id],onDelete:Restrict)
+  referrals Referral[]
+  @@unique([hospitalId,identifier])
+}
+model Referral {
+  id String @id @default(uuid())
+  originId String @map("hospital_id")
+  destinationId String?
+  patientId String
+  requiredService String
+  requiredSpecialty String?
+  clinicalSummary String
+  urgency String
+  status ReferralStatus @default(DRAFT)
+  createdBy String
+  version Int @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  origin Hospital @relation("origin",fields:[originId],references:[id],onDelete:Restrict)
+  destination Hospital? @relation("destination",fields:[destinationId],references:[id],onDelete:Restrict)
+  patient Patient @relation(fields:[patientId],references:[id],onDelete:Restrict)
+  history ReferralHistory[]
+  outcome ReferralOutcome?
+  predictions Prediction[]
+  @@index([originId,status,createdAt])
+  @@index([destinationId,status,createdAt])
+}
+model ReferralHistory {
+  id String @id @default(uuid())
+  referralId String
+  status ReferralStatus
+  actorId String
+  reason String?
+  createdAt DateTime @default(now())
+  referral Referral @relation(fields:[referralId],references:[id],onDelete:Restrict)
+  @@index([referralId,createdAt])
+}
+model ReferralOutcome {
+  referralId String @id
+  summary String
+  actualDelayMinutes Int
+  recordedBy String
+  verifiedBy String?
+  verifiedAt DateTime?
+  createdAt DateTime @default(now())
+  referral Referral @relation(fields:[referralId],references:[id],onDelete:Restrict)
+}
+model ModelVersion {
+  id String @id
+  component String
+  metadata Json
+  createdAt DateTime @default(now())
+  predictions Prediction[]
+}
+model Prediction {
+  id String @id @default(uuid())
+  hospitalId String @map("hospital_id")
+  referralId String?
+  component String
+  modelVersionId String
+  result Json
+  createdAt DateTime @default(now())
+  hospital Hospital @relation(fields:[hospitalId],references:[id],onDelete:Restrict)
+  referral Referral? @relation(fields:[referralId],references:[id],onDelete:Restrict)
+  modelVersion ModelVersion @relation(fields:[modelVersionId],references:[id],onDelete:Restrict)
+  feedback Feedback[]
+  @@index([hospitalId,createdAt])
+}
+model Feedback {
+  id String @id @default(uuid())
+  predictionId String
+  hospitalId String @map("hospital_id")
+  userId String
+  rating Int
+  comment String
+  createdAt DateTime @default(now())
+  prediction Prediction @relation(fields:[predictionId],references:[id],onDelete:Restrict)
+  @@unique([predictionId,userId])
+  @@index([hospitalId])
+}
+model ChatThread {
+  id String @id @default(uuid())
+  hospitalId String @map("hospital_id")
+  userId String
+  title String @default("New chat")
+  version Int @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  hospital Hospital @relation(fields:[hospitalId],references:[id],onDelete:Restrict)
+  conversations Conversation[]
+  @@unique([id,hospitalId,userId])
+  @@index([hospitalId,userId,updatedAt,id])
+}
+model Conversation {
+  id String @id @default(uuid())
+  hospitalId String @map("hospital_id")
+  userId String
+  threadId String
+  sequence Int
+  clientRequestId String? @unique
+  requestDigest String?
+  attachmentKind String?
+  question String
+  answer String
+  sources Json
+  createdAt DateTime @default(now())
+  hospital Hospital @relation(fields:[hospitalId],references:[id],onDelete:Restrict)
+  thread ChatThread @relation(fields:[threadId,hospitalId,userId],references:[id,hospitalId,userId],onDelete:Restrict)
+  knowledge KnowledgeRecord[]
+  @@index([hospitalId,userId,createdAt])
+  @@unique([threadId,sequence])
+}
+model KnowledgeRecord {
+  id String @id @default(uuid())
+  hospitalId String @map("hospital_id")
+  conversationId String?
+  category String
+  content String
+  source String
+  visibility Visibility @default(PRIVATE)
+  status Approval @default(PENDING)
+  createdBy String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  reviewAt DateTime?
+  hospital Hospital @relation(fields:[hospitalId],references:[id],onDelete:Restrict)
+  conversation Conversation? @relation(fields:[conversationId],references:[id],onDelete:Restrict)
+  approval KnowledgeApproval?
+  @@index([hospitalId,status,visibility])
+}
+model KnowledgeApproval {
+  id String @id @default(uuid())
+  knowledgeId String @unique
+  reviewerId String
+  decision Approval
+  reason String
+  createdAt DateTime @default(now())
+  knowledge KnowledgeRecord @relation(fields:[knowledgeId],references:[id],onDelete:Restrict)
+}
+model ExternalSource {
+  id String @id @default(uuid())
+  hospitalId String @map("hospital_id")
+  kind String
+  url String
+  status String @default("REGISTERED")
+  permissionStatus String @default("NOT_AUTHORIZED")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  hospital Hospital @relation(fields:[hospitalId],references:[id],onDelete:Restrict)
+  jobs SourceJob[]
+  @@unique([hospitalId,url])
+}
+model SourceJob {
+  id String @id @default(uuid())
+  sourceId String
+  hospitalId String @map("hospital_id")
+  actorId String
+  status String @default("PENDING")
+  error String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  source ExternalSource @relation(fields:[sourceId],references:[id],onDelete:Restrict)
+  @@index([status,createdAt])
+  @@index([hospitalId])
+}
+model Notification {
+  id String @id @default(uuid())
+  hospitalId String @map("hospital_id")
+  message String
+  referralId String?
+  readAt DateTime?
+  createdAt DateTime @default(now())
+  hospital Hospital @relation(fields:[hospitalId],references:[id],onDelete:Restrict)
+  @@index([hospitalId,createdAt])
+}
+model AuditLog {
+  id String @id @default(uuid())
+  actorId String?
+  hospitalId String? @map("hospital_id")
+  action String
+  resourceId String?
+  createdAt DateTime @default(now())
+  @@index([hospitalId,createdAt])
+}
+model Setting {
+  key String @id
+  value Json
+  updatedAt DateTime @updatedAt
+}

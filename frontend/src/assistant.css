@@ -1,0 +1,19 @@
+.assistant-layout{display:grid;grid-template-columns:220px minmax(0,1fr);gap:16px;align-items:start}
+.assistant-layout .chat-history{padding:14px;min-width:0;max-height:80vh;overflow-y:auto}
+.chat-new{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;border:1px solid #c4d9ce;border-radius:10px;background:#e8f3ec;color:#205c49;padding:12px;cursor:pointer;font-weight:650}
+.chat-new:hover{background:#dceee3}.chat-new:disabled,.chat-history-item:disabled{opacity:.55;cursor:wait}
+.chat-history h2{font-size:13px;letter-spacing:.04em;margin:23px 4px 4px;color:#365446}
+.chat-history-note,.chat-history-empty{font-size:12px;color:#73847a;margin:4px 4px 14px;line-height:1.5}
+.chat-history nav{display:flex;flex-direction:column;gap:5px;margin-bottom:12px}
+.chat-history-item{display:flex;align-items:flex-start;gap:8px;width:100%;padding:11px 9px;border:1px solid transparent;border-radius:9px;background:transparent;text-align:left;color:#435e4f;cursor:pointer}
+.chat-history-item:hover{background:#f0f6f2}.chat-history-item.selected{background:#e6f1ea;border-color:#cfe1d5;color:#1f5c46}
+.chat-history-item svg{flex-shrink:0;margin-top:2px}.chat-history-item span{min-width:0;flex:1}
+.chat-history-item strong{display:block;font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.5}
+.chat-history-item small{display:block;font-size:10px;color:#74867a;margin-top:4px}
+.assistant-layout .chat-panel{min-width:0}.chat-thread-heading{padding:15px 20px;border-bottom:1px solid #e0e8e2;background:#fbfdfb;min-width:0}
+.chat-thread-heading h2{font-size:15px;color:#244c3b;margin:0;overflow-wrap:anywhere}.chat-thread-heading small{display:block;font-size:11px;color:#708477;margin-top:4px}
+.chat-turn{display:flex;flex-direction:column;gap:14px}.chat-load-earlier{align-self:center;font-size:12px}
+.assistant-layout .chat-controls{flex-wrap:wrap}.assistant-layout .chat-hint{min-width:60px}
+.assistant-layout .chat-attachment-preview{flex-wrap:wrap}
+@media(max-width:1100px){.assistant-layout{grid-template-columns:180px minmax(0,1fr);gap:12px}.assistant-layout .chat-history{padding:10px}.assistant-layout .chat-hint{display:none}.assistant-layout .chat-send{margin-left:auto}}
+@media(max-width:760px){.assistant-layout{grid-template-columns:1fr}.assistant-layout .chat-history{max-height:210px}.chat-history h2{margin-top:12px}.chat-history nav{gap:3px}.chat-thread-heading{padding:12px 16px}}

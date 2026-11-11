@@ -1,0 +1,8 @@
+venv/
+.venv/
+__pycache__/
+*.pyc
+.env
+datasets/*.db*
+models/managed/
+reports/experiments/*/training_snapshot.csv

@@ -1,0 +1,87 @@
+{
+  "status": "passed",
+  "scope": "synthetic V6 feature integrity and temporal leakage",
+  "raw_sha256": "6556828dce7b9285f7901bf9dd408ed6320a661c489b7e614d65e16826c169c2",
+  "features_sha256": "be6f97e43e844e9e8fc854ad8516998b41f08b516a31b47b37cdc6698d5e7eb1",
+  "features": [
+    "hospital_id",
+    "patient_volume",
+    "incoming_referrals",
+    "pending_referrals",
+    "available_beds",
+    "total_beds",
+    "workload_level",
+    "bed_occupancy_rate",
+    "pending_per_bed",
+    "referral_to_patient_ratio",
+    "previous_patient_volume",
+    "previous_incoming_referrals",
+    "previous_pending_referrals",
+    "previous_available_beds",
+    "previous_workload_level",
+    "average_3day_patient_volume",
+    "average_7day_patient_volume",
+    "average_3day_pending_referrals",
+    "average_7day_pending_referrals",
+    "average_3day_incoming_referrals",
+    "average_7day_incoming_referrals",
+    "average_3day_available_beds",
+    "average_7day_available_beds",
+    "patient_volume_trend",
+    "pending_referrals_trend",
+    "next_day_of_week",
+    "next_day_month"
+  ],
+  "feature_count": 27,
+  "rows": 1790,
+  "checks": [
+    "stored/raw agreement",
+    "independent next-day targets and windows",
+    "future perturbation",
+    "hospital isolation",
+    "input sorting",
+    "feature whitelist",
+    "chronological embargo"
+  ],
+  "split": {
+    "training": {
+      "rows": 1425,
+      "record_start": "2025-11-11",
+      "record_end": "2026-08-22",
+      "target_end": "2026-08-23",
+      "classes": {
+        "Medium": 914,
+        "Low": 357,
+        "High": 154
+      }
+    },
+    "validation": {
+      "rows": 360,
+      "record_start": "2026-08-24",
+      "record_end": "2026-11-03",
+      "target_end": "2026-11-04",
+      "classes": {
+        "Medium": 227,
+        "Low": 105,
+        "High": 28
+      }
+    },
+    "excluded": {
+      "rows": 5,
+      "record_start": "2026-08-23",
+      "record_end": "2026-08-23",
+      "target_end": "2026-08-24",
+      "classes": {
+        "Medium": 3,
+        "Low": 2
+      }
+    }
+  },
+  "prediction_cutoff": "After the complete record_date observations are finalized.",
+  "limitations": [
+    "Synthetic data only",
+    "Hospital identity retained for known-hospital prediction",
+    "H004 has no High examples",
+    "No clinical validation"
+  ]
+}

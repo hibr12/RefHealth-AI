@@ -1,0 +1,56 @@
+
+==================================================
+          COECARE-HEALTH AI
+          AUTOMATED MONITORING REPORT
+==================================================
+
+REPORT GENERATED AT:
+2026-11-03T17:22:04.851376+00:00
+
+==================================================
+          1. MODEL PERFORMANCE MONITORING
+==================================================
+
+
+COECARE-HEALTH AI
+AUTOMATED MODEL MONITORING
+==================================================
+
+MODEL VERSION: random_forest_v1
+RECORD TYPE: test
+COMPLETED RECORDS: 3
+--------------------------------------------------
+Accuracy: 0.3333
+Precision: 0.3333
+Recall: 1.0
+F1-score: 0.5
+Confusion Matrix: [[0, 2], [0, 1]]
+
+PERFORMANCE STATUS: INSUFFICIENT DATA
+WARNING: More completed records are required.
+
+NOTICE: Test records are not clinical performance evidence.
+
+MONITORING COMPLETED.
+
+
+
+==================================================
+          2. DATA DRIFT MONITORING
+==================================================
+
+
+COECARE-HEALTH AI
+TIME-BASED DATA DRIFT MONITORING
+==================================================
+RECORD TYPE: real
+
+TOTAL RECORDS: 0
+
+NO RECORDS AVAILABLE FOR MONITORING.
+
+
+
+==================================================
+          END OF MONITORING REPORT
+==================================================

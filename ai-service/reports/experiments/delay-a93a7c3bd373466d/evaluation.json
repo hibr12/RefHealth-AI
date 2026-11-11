@@ -1,0 +1,255 @@
+{
+  "version": "delay-a93a7c3bd373466d",
+  "features": [
+    "distance_km",
+    "hospital_workload",
+    "pending_referrals",
+    "service_available",
+    "submission_hour",
+    "submission_day"
+  ],
+  "data_source": "synthetic",
+  "status": "candidate",
+  "calibrated": false,
+  "promotion_eligible": false,
+  "compared_active_version": "legacy-delay-v1",
+  "dataset_sha256": "8b7d48f266e0204cefb0c7081bc809c5e73cda864a728fe14bb14d3bdf11fd29",
+  "snapshot": "C:\\Users\\G O\\Desktop\\corecare-health AI\\ai-service\\reports\\experiments\\delay-a93a7c3bd373466d\\training_snapshot.csv",
+  "evaluation": {
+    "exploratory_cross_validation": {
+      "random_forest": {
+        "records": 15,
+        "accuracy": 0.9333333333333333,
+        "macro_f1": 0.9321266968325792,
+        "weighted_f1": 0.9327300150829563,
+        "per_class": {
+          "0": {
+            "precision": 0.8888888888888888,
+            "recall": 1.0,
+            "f1-score": 0.9411764705882353,
+            "support": 8.0
+          },
+          "1": {
+            "precision": 1.0,
+            "recall": 0.8571428571428571,
+            "f1-score": 0.9230769230769231,
+            "support": 7.0
+          },
+          "accuracy": 0.9333333333333333,
+          "macro avg": {
+            "precision": 0.9444444444444444,
+            "recall": 0.9285714285714286,
+            "f1-score": 0.9321266968325792,
+            "support": 15.0
+          },
+          "weighted avg": {
+            "precision": 0.9407407407407408,
+            "recall": 0.9333333333333333,
+            "f1-score": 0.9327300150829563,
+            "support": 15.0
+          }
+        },
+        "confusion_matrix": [
+          [
+            8,
+            0
+          ],
+          [
+            1,
+            6
+          ]
+        ],
+        "class_order": [
+          0,
+          1
+        ],
+        "log_loss": 0.19054441781043102,
+        "multiclass_brier": 0.10604000000000001,
+        "confidence_bins": [
+          {
+            "lower": 0.0,
+            "upper": 0.5,
+            "count": 0,
+            "accuracy": null
+          },
+          {
+            "lower": 0.5,
+            "upper": 0.7,
+            "count": 0,
+            "accuracy": null
+          },
+          {
+            "lower": 0.7,
+            "upper": 0.9,
+            "count": 5,
+            "accuracy": 0.8
+          },
+          {
+            "lower": 0.9,
+            "upper": 1.0,
+            "count": 10,
+            "accuracy": 1.0
+          }
+        ]
+      },
+      "extra_trees": {
+        "records": 15,
+        "accuracy": 0.9333333333333333,
+        "macro_f1": 0.9321266968325792,
+        "weighted_f1": 0.9327300150829563,
+        "per_class": {
+          "0": {
+            "precision": 0.8888888888888888,
+            "recall": 1.0,
+            "f1-score": 0.9411764705882353,
+            "support": 8.0
+          },
+          "1": {
+            "precision": 1.0,
+            "recall": 0.8571428571428571,
+            "f1-score": 0.9230769230769231,
+            "support": 7.0
+          },
+          "accuracy": 0.9333333333333333,
+          "macro avg": {
+            "precision": 0.9444444444444444,
+            "recall": 0.9285714285714286,
+            "f1-score": 0.9321266968325792,
+            "support": 15.0
+          },
+          "weighted avg": {
+            "precision": 0.9407407407407408,
+            "recall": 0.9333333333333333,
+            "f1-score": 0.9327300150829563,
+            "support": 15.0
+          }
+        },
+        "confusion_matrix": [
+          [
+            8,
+            0
+          ],
+          [
+            1,
+            6
+          ]
+        ],
+        "class_order": [
+          0,
+          1
+        ],
+        "log_loss": 0.2556885949432624,
+        "multiclass_brier": 0.15522666666666665,
+        "confidence_bins": [
+          {
+            "lower": 0.0,
+            "upper": 0.5,
+            "count": 0,
+            "accuracy": null
+          },
+          {
+            "lower": 0.5,
+            "upper": 0.7,
+            "count": 2,
+            "accuracy": 1.0
+          },
+          {
+            "lower": 0.7,
+            "upper": 0.9,
+            "count": 5,
+            "accuracy": 0.8
+          },
+          {
+            "lower": 0.9,
+            "upper": 1.0,
+            "count": 8,
+            "accuracy": 1.0
+          }
+        ]
+      },
+      "logistic_regression": {
+        "records": 15,
+        "accuracy": 0.8666666666666667,
+        "macro_f1": 0.8611111111111112,
+        "weighted_f1": 0.8629629629629629,
+        "per_class": {
+          "0": {
+            "precision": 0.8,
+            "recall": 1.0,
+            "f1-score": 0.8888888888888888,
+            "support": 8.0
+          },
+          "1": {
+            "precision": 1.0,
+            "recall": 0.7142857142857143,
+            "f1-score": 0.8333333333333334,
+            "support": 7.0
+          },
+          "accuracy": 0.8666666666666667,
+          "macro avg": {
+            "precision": 0.9,
+            "recall": 0.8571428571428572,
+            "f1-score": 0.8611111111111112,
+            "support": 15.0
+          },
+          "weighted avg": {
+            "precision": 0.8933333333333333,
+            "recall": 0.8666666666666667,
+            "f1-score": 0.8629629629629629,
+            "support": 15.0
+          }
+        },
+        "confusion_matrix": [
+          [
+            8,
+            0
+          ],
+          [
+            2,
+            5
+          ]
+        ],
+        "class_order": [
+          0,
+          1
+        ],
+        "log_loss": 0.24057076885237952,
+        "multiclass_brier": 0.14412485133292507,
+        "confidence_bins": [
+          {
+            "lower": 0.0,
+            "upper": 0.5,
+            "count": 0,
+            "accuracy": null
+          },
+          {
+            "lower": 0.5,
+            "upper": 0.7,
+            "count": 2,
+            "accuracy": 0.5
+          },
+          {
+            "lower": 0.7,
+            "upper": 0.9,
+            "count": 6,
+            "accuracy": 0.8333333333333334
+          },
+          {
+            "lower": 0.9,
+            "upper": 1.0,
+            "count": 7,
+            "accuracy": 1.0
+          }
+        ]
+      }
+    },
+    "selected_algorithm": "random_forest",
+    "limitations": [
+      "Only 15 synthetic records",
+      "No timestamp-derived labels",
+      "No independent final evaluation",
+      "Selection uses the same exploratory folds",
+      "Insufficient data for reliable calibration"
+    ]
+  }
+}

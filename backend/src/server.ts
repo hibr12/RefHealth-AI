@@ -1,0 +1,10 @@
+import {buildApp,db} from './app.js';
+import {config} from './config.js';
+import {processSourceJob} from './sources.js';
+const app=await buildApp();
+await db.sourceJob.updateMany({where:{status:'RUNNING',updatedAt:{lt:new Date(Date.now()-300000)}},data:{status:'FAILED',error:'Worker interrupted. Review and enqueue collection again.'}});
+let working=false;
+const worker=setInterval(async()=>{if(working)return;working=true;try{await processSourceJob();}catch{app.log.error('Source worker failed; check database availability.');}finally{working=false;}},5000);
+worker.unref();
+for(const signal of ['SIGINT','SIGTERM'])process.on(signal,async()=>{clearInterval(worker);await app.close();await db.$disconnect();process.exit(0);});
+await app.listen({host:config.HOST,port:config.PORT});

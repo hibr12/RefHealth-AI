@@ -1,0 +1,42 @@
+import {test,expect} from '@playwright/test';
+import {randomUUID} from 'node:crypto';
+import {mkdirSync} from 'node:fs';
+
+test('separate saved chats reopen in order and retain their own context',async({page,request})=>{
+  test.skip(process.env.REFHEALTH_LIVE_CHAT_THREADS_TEST!=='1','Requires the isolated test stack and real configured providers.');
+  test.setTimeout(360000);
+  expect(new URL(process.env.DATABASE_URL||'postgresql://localhost/unconfigured').pathname).toBe('/coecare_test');
+  const password='Browser-test-password-123!',suffix=randomUUID(),email=`threads-${suffix}@test.org`;
+  const login=await request.post('/api/auth/login',{data:{email:'browser-admin@test.org',password}});expect(login.ok()).toBeTruthy();
+  const admin=await login.json();
+  const registration=await request.post('/api/hospitals/register',{data:{name:'Synthetic Chat History Hospital '+suffix,registrationNumber:'THREADS-'+suffix,location:'Synthetic city',phone:'12345',email,adminName:'History Test Admin',adminEmail:email,password}});
+  expect(registration.ok()).toBeTruthy();const hospital=(await registration.json()).hospital;
+  expect((await request.patch(`/api/admin/hospitals/${hospital.id}`,{headers:{Authorization:`Bearer ${admin.accessToken}`},data:{status:'APPROVED'}})).ok()).toBeTruthy();
+  await page.goto('/login');await page.getByLabel('Email address').fill(email);await page.getByLabel('Password',{exact:true}).fill(password);await page.getByRole('button',{name:'Sign in to workspace'}).click();await page.getByRole('link',{name:'RefHealth AI Assistant'}).click();
+  const ask=async(question:string)=>{
+    const response=page.waitForResponse(r=>r.url().endsWith('/api/assistant/chat')&&r.request().method()==='POST',{timeout:100000});
+    const input=page.getByRole('textbox',{name:'Message RefHealth AI Assistant'});await expect(input).toBeEnabled();await input.fill(question);await page.getByRole('button',{name:'Send',exact:true}).click();
+    const result=await response,body=await result.json();expect(result.status(),JSON.stringify(body.error)).toBe(200);
+    await expect(page.locator('.chat-message.assistant').last()).toContainText(body.conversation.answer);
+    await expect(page.getByRole('button',{name:'New chat',exact:true})).toBeEnabled();
+    return body;
+  };
+  const first=await ask('For this software test, remember BLUE RIVER as our test code in this chat. It is not a verified hospital fact. Repeat the test code.');
+  expect(first.conversation.answer).toMatch(/BLUE RIVER/i);await expect(page).toHaveURL(new RegExp('chat='+first.thread.id));
+  await page.getByRole('button',{name:'New chat',exact:true}).click();await expect(page.locator('.chat-message')).toHaveCount(0);
+  const second=await ask('What is your purpose in this system?');expect(second.thread.id).not.toBe(first.thread.id);
+  await expect(page.locator('.chat-history-item')).toHaveCount(2);
+  await page.locator('.chat-history-item').filter({hasText:first.thread.title}).click();await expect(page.locator('.chat-message.assistant')).toHaveCount(1);
+  const continued=await ask('Repeat our software test code from earlier in this chat. It is not a verified hospital fact.');
+  expect(continued.thread.id).toBe(first.thread.id);expect(continued.conversation.sequence).toBe(2);expect(continued.conversation.answer).toMatch(/BLUE RIVER/i);
+  await expect(page.locator('.chat-history-item').first()).toContainText(first.thread.title);
+  await page.reload();await expect(page.locator('.chat-message.assistant')).toHaveCount(2);await expect(page.locator('.chat-message.assistant').last()).toContainText(continued.conversation.answer);
+  await page.locator('.chat-history-item').filter({hasText:second.thread.title}).click();await expect(page.locator('.chat-message.assistant')).toHaveCount(1);
+  await expect(page.locator('.chat-message.assistant')).toContainText(second.conversation.answer);expect(await page.locator('.chat-messages').innerText()).not.toContain('BLUE RIVER');
+  await page.locator('.chat-history-item').filter({hasText:first.thread.title}).click();await expect(page.locator('.chat-message.assistant')).toHaveCount(2);
+  mkdirSync('../.local/chat-history',{recursive:true});
+  await page.screenshot({path:'../.local/chat-history/desktop.png',fullPage:true});
+  await page.setViewportSize({width:390,height:844});
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth)).toBeTruthy();
+  await page.screenshot({path:'../.local/chat-history/mobile.png',fullPage:true});
+});

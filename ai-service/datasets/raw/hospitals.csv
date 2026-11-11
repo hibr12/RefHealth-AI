@@ -1,0 +1,11 @@
+hospital_id,hospital_name,distance_km,service,hospital_workload,pending_referrals,service_available,available_beds
+H001,Bahir Dar General Hospital,5,Emergency,High,25,1,3
+H001,Bahir Dar General Hospital,5,Surgery,Medium,15,1,8
+H002,Felege Hiwot Hospital,12,Emergency,Low,8,1,12
+H002,Felege Hiwot Hospital,12,Surgery,High,30,1,4
+H003,Addis Alem Hospital,8,Emergency,Medium,18,1,7
+H003,Addis Alem Hospital,8,Surgery,Low,5,0,10
+H004,Debre Markos Hospital,35,Emergency,Low,6,1,15
+H004,Debre Markos Hospital,35,Surgery,Medium,12,1,9
+H005,Gamby Teaching Hospital,10,Emergency,High,28,1,2
+H005,Gamby Teaching Hospital,10,Surgery,Low,7,1,11

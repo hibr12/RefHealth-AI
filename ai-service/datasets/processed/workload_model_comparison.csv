@@ -1,0 +1,6 @@
+Model,Accuracy,Macro F1
+Random Forest,0.6923,0.6829
+Persistence Baseline,0.6923,0.6806
+Hist Gradient Boosting,0.6308,0.6455
+Extra Trees,0.6308,0.6235
+Gradient Boosting,0.6154,0.5964

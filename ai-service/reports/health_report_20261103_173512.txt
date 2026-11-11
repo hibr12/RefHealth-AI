@@ -1,0 +1,40 @@
+
+=======================================================
+             COECARE-HEALTH AI
+             SYSTEM HEALTH REPORT
+=======================================================
+
+Generated at:
+2026-11-03T17:35:12.845089+00:00
+
+OVERALL SYSTEM STATUS:
+WARNING
+
+-------------------------------------------------------
+1. MODEL PERFORMANCE STATUS
+-------------------------------------------------------
+
+Status: WARNING
+
+Details:
+Insufficient data for reliable performance monitoring.
+
+-------------------------------------------------------
+2. DATA DRIFT STATUS
+-------------------------------------------------------
+
+Status: WARNING
+
+Details:
+Insufficient real referral data for drift monitoring.
+
+-------------------------------------------------------
+3. ALERT SUMMARY
+-------------------------------------------------------
+
+MODEL ALERT: Insufficient data for reliable performance monitoring.
+DATA DRIFT ALERT: Insufficient real referral data for drift monitoring.
+
+=======================================================
+             END OF HEALTH REPORT
+=======================================================

@@ -1,0 +1,47 @@
+services:
+  postgres:
+    image: postgres:17
+    environment:
+      POSTGRES_USER: coecare
+      POSTGRES_DB: coecare
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}
+    volumes: ["postgres-data:/var/lib/postgresql/data"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U coecare -d coecare"]
+      interval: 5s
+      retries: 20
+  ai:
+    build: ./ai-service
+    environment:
+      CORECARE_API_KEY: ${AI_SERVICE_KEY:?Set AI_SERVICE_KEY}
+      CORECARE_ADMIN_TOKEN: ${AI_ADMIN_TOKEN:?Set AI_ADMIN_TOKEN}
+      CORECARE_DATABASE: /var/data/feedback.db
+      CORECARE_MODEL_DIR: /var/data/models/managed
+      PLATFORM_BACKEND_URL: http://backend:3000
+      LLM_BASE_URL: ${LLM_BASE_URL:-https://api.groq.com/openai/v1}
+      LLM_API_KEY: ${LLM_API_KEY:-}
+      LLM_MODEL: ${LLM_MODEL:-openai/gpt-oss-20b}
+      LLM_VISION_MODEL: ${LLM_VISION_MODEL:-}
+      LLM_AUDIO_MODEL: ${LLM_AUDIO_MODEL:-}
+      EMBEDDING_BASE_URL: ${EMBEDDING_BASE_URL:-https://generativelanguage.googleapis.com/v1beta}
+      EMBEDDING_API_KEY: ${EMBEDDING_API_KEY:-}
+      EMBEDDING_MODEL: ${EMBEDDING_MODEL:-gemini-embedding-001}
+    volumes: ["ai-data:/var/data"]
+  backend:
+    build: ./backend
+    environment:
+      DATABASE_URL: postgresql://coecare:${POSTGRES_PASSWORD}@postgres:5432/coecare
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET}
+      AI_SERVICE_URL: http://ai:8000
+      AI_SERVICE_KEY: ${AI_SERVICE_KEY}
+      CORS_ORIGIN: ${APP_ORIGIN:?Set APP_ORIGIN}
+    depends_on:
+      postgres: {condition: service_healthy}
+      ai: {condition: service_started}
+  frontend:
+    build: ./frontend
+    ports: ["127.0.0.1:8080:80"]
+    depends_on: [backend]
+volumes:
+  postgres-data:
+  ai-data:

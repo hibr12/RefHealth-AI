@@ -1,0 +1,1 @@
+record_id,hospital_id,record_date,patient_volume,incoming_referrals,pending_referrals,available_beds,total_beds,workload_level

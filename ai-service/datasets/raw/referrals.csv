@@ -1,0 +1,16 @@
+distance_km,hospital_workload,pending_referrals,service_available,submission_hour,submission_day,delayed
+10,Low,2,1,8,Monday,0
+35,High,25,1,10,Tuesday,1
+15,Medium,8,1,9,Wednesday,0
+40,High,30,0,14,Thursday,1
+20,Medium,12,1,11,Friday,0
+45,High,35,0,16,Monday,1
+12,Low,3,1,8,Tuesday,0
+30,Medium,18,1,13,Wednesday,1
+18,Low,5,1,10,Thursday,0
+50,High,40,0,15,Friday,1
+25,Medium,15,1,12,Monday,0
+38,High,28,1,17,Tuesday,1
+14,Low,4,1,9,Wednesday,0
+42,High,32,0,14,Thursday,1
+22,Medium,10,1,11,Friday,0

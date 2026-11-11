@@ -1,0 +1,633 @@
+{
+  "version": "workload-5c18c15a9c4d4122",
+  "features": [
+    "hospital_id",
+    "patient_volume",
+    "incoming_referrals",
+    "pending_referrals",
+    "available_beds",
+    "total_beds",
+    "workload_level",
+    "bed_occupancy_rate",
+    "pending_per_bed",
+    "referral_to_patient_ratio",
+    "previous_patient_volume",
+    "previous_incoming_referrals",
+    "previous_pending_referrals",
+    "previous_available_beds",
+    "previous_workload_level",
+    "average_3day_patient_volume",
+    "average_7day_patient_volume",
+    "average_3day_pending_referrals",
+    "average_7day_pending_referrals",
+    "average_3day_incoming_referrals",
+    "average_7day_incoming_referrals",
+    "average_3day_available_beds",
+    "average_7day_available_beds",
+    "patient_volume_trend",
+    "pending_referrals_trend",
+    "next_day_of_week",
+    "next_day_month"
+  ],
+  "data_source": "synthetic",
+  "status": "candidate",
+  "known_hospitals": [
+    "H001",
+    "H002",
+    "H003",
+    "H004",
+    "H005"
+  ],
+  "calibrated": true,
+  "training_end": "2026-08-23",
+  "compared_active_version": null,
+  "promotion_eligible": false,
+  "dataset_sha256": "7da42ca62722ef295761c3a00cf83793e61405ce85fcc981484660a874e83e8a",
+  "snapshot": "C:\\Users\\G O\\Desktop\\corecare-health AI\\ai-service\\reports\\experiments\\workload-5c18c15a9c4d4122\\training_snapshot.csv",
+  "evaluation": {
+    "selection": "Two expanding chronological folds within training; final validation never used for selection.",
+    "development_macro_f1": {
+      "random_forest": [
+        0.5819211454215193,
+        0.655659677277078
+      ],
+      "extra_trees": [
+        0.6151445091469571,
+        0.6616730415072957
+      ],
+      "hist_gradient_boosting": [
+        0.5406705668949682,
+        0.627308616072661
+      ],
+      "gradient_boosting": [
+        0.5562076160667709,
+        0.6683016048785125
+      ]
+    },
+    "selected_algorithm": "extra_trees",
+    "calibration": {
+      "method": "sigmoid",
+      "fit_rows": 1135,
+      "calibration_rows": 285
+    },
+    "held_out": {
+      "records": 360,
+      "accuracy": 0.7666666666666667,
+      "macro_f1": 0.6702537425226501,
+      "weighted_f1": 0.7607950872656755,
+      "per_class": {
+        "Low": {
+          "precision": 0.7555555555555555,
+          "recall": 0.6476190476190476,
+          "f1-score": 0.6974358974358974,
+          "support": 105.0
+        },
+        "Medium": {
+          "precision": 0.7871485943775101,
+          "recall": 0.8634361233480177,
+          "f1-score": 0.8235294117647058,
+          "support": 227.0
+        },
+        "High": {
+          "precision": 0.5714285714285714,
+          "recall": 0.42857142857142855,
+          "f1-score": 0.4897959183673469,
+          "support": 28.0
+        },
+        "accuracy": 0.7666666666666667,
+        "macro avg": {
+          "precision": 0.7047109071205456,
+          "recall": 0.6465421998461646,
+          "f1-score": 0.6702537425226501,
+          "support": 360.0
+        },
+        "weighted avg": {
+          "precision": 0.7611557340473003,
+          "recall": 0.7666666666666667,
+          "f1-score": 0.7607950872656755,
+          "support": 360.0
+        }
+      },
+      "confusion_matrix": [
+        [
+          68,
+          37,
+          0
+        ],
+        [
+          22,
+          196,
+          9
+        ],
+        [
+          0,
+          16,
+          12
+        ]
+      ],
+      "class_order": [
+        "Low",
+        "Medium",
+        "High"
+      ],
+      "log_loss": 0.5401803342497316,
+      "multiclass_brier": 0.3414838047698447,
+      "confidence_bins": [
+        {
+          "lower": 0.0,
+          "upper": 0.5,
+          "count": 7,
+          "accuracy": 0.5714285714285714
+        },
+        {
+          "lower": 0.5,
+          "upper": 0.7,
+          "count": 117,
+          "accuracy": 0.6324786324786325
+        },
+        {
+          "lower": 0.7,
+          "upper": 0.9,
+          "count": 187,
+          "accuracy": 0.8128342245989305
+        },
+        {
+          "lower": 0.9,
+          "upper": 1.0,
+          "count": 49,
+          "accuracy": 0.9387755102040817
+        }
+      ]
+    },
+    "training_rows": 1425,
+    "validation_rows": 360,
+    "boundary_rows_excluded": 5,
+    "validation_start": "2026-08-24",
+    "validation_end": "2026-11-03",
+    "majority_baseline": {
+      "records": 360,
+      "accuracy": 0.6305555555555555,
+      "macro_f1": 0.2578080636002272,
+      "weighted_f1": 0.4876869203104297,
+      "per_class": {
+        "Low": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1-score": 0.0,
+          "support": 105.0
+        },
+        "Medium": {
+          "precision": 0.6305555555555555,
+          "recall": 1.0,
+          "f1-score": 0.7734241908006815,
+          "support": 227.0
+        },
+        "High": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1-score": 0.0,
+          "support": 28.0
+        },
+        "accuracy": 0.6305555555555555,
+        "macro avg": {
+          "precision": 0.21018518518518517,
+          "recall": 0.3333333333333333,
+          "f1-score": 0.2578080636002272,
+          "support": 360.0
+        },
+        "weighted avg": {
+          "precision": 0.3976003086419753,
+          "recall": 0.6305555555555555,
+          "f1-score": 0.4876869203104297,
+          "support": 360.0
+        }
+      },
+      "confusion_matrix": [
+        [
+          0,
+          105,
+          0
+        ],
+        [
+          0,
+          227,
+          0
+        ],
+        [
+          0,
+          28,
+          0
+        ]
+      ],
+      "class_order": [
+        "Low",
+        "Medium",
+        "High"
+      ]
+    },
+    "persistence_baseline": {
+      "records": 360,
+      "accuracy": 0.7472222222222222,
+      "macro_f1": 0.6668462662467872,
+      "weighted_f1": 0.7473579099956175,
+      "per_class": {
+        "Low": {
+          "precision": 0.6981132075471698,
+          "recall": 0.7047619047619048,
+          "f1-score": 0.7014218009478673,
+          "support": 105.0
+        },
+        "Medium": {
+          "precision": 0.8008849557522124,
+          "recall": 0.7973568281938326,
+          "f1-score": 0.7991169977924945,
+          "support": 227.0
+        },
+        "High": {
+          "precision": 0.5,
+          "recall": 0.5,
+          "f1-score": 0.5,
+          "support": 28.0
+        },
+        "accuracy": 0.7472222222222222,
+        "macro avg": {
+          "precision": 0.6663327210997941,
+          "recall": 0.6673729109852458,
+          "f1-score": 0.6668462662467872,
+          "support": 360.0
+        },
+        "weighted avg": {
+          "precision": 0.7475076993005696,
+          "recall": 0.7472222222222222,
+          "f1-score": 0.7473579099956175,
+          "support": 360.0
+        }
+      },
+      "confusion_matrix": [
+        [
+          74,
+          31,
+          0
+        ],
+        [
+          32,
+          181,
+          14
+        ],
+        [
+          0,
+          14,
+          14
+        ]
+      ],
+      "class_order": [
+        "Low",
+        "Medium",
+        "High"
+      ]
+    },
+    "per_hospital": {
+      "H001": {
+        "records": 72,
+        "accuracy": 0.8194444444444444,
+        "macro_f1": 0.46913580246913583,
+        "weighted_f1": 0.8117283950617283,
+        "per_class": {
+          "Low": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1-score": 0.0,
+            "support": 0.0
+          },
+          "Medium": {
+            "precision": 0.8666666666666667,
+            "recall": 0.9122807017543859,
+            "f1-score": 0.8888888888888888,
+            "support": 57.0
+          },
+          "High": {
+            "precision": 0.5833333333333334,
+            "recall": 0.4666666666666667,
+            "f1-score": 0.5185185185185185,
+            "support": 15.0
+          },
+          "accuracy": 0.8194444444444444,
+          "macro avg": {
+            "precision": 0.4833333333333334,
+            "recall": 0.4596491228070175,
+            "f1-score": 0.46913580246913583,
+            "support": 72.0
+          },
+          "weighted avg": {
+            "precision": 0.8076388888888889,
+            "recall": 0.8194444444444444,
+            "f1-score": 0.8117283950617283,
+            "support": 72.0
+          }
+        },
+        "confusion_matrix": [
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            52,
+            5
+          ],
+          [
+            0,
+            8,
+            7
+          ]
+        ],
+        "class_order": [
+          "Low",
+          "Medium",
+          "High"
+        ]
+      },
+      "H002": {
+        "records": 72,
+        "accuracy": 0.6527777777777778,
+        "macro_f1": 0.43297630639402795,
+        "weighted_f1": 0.6541977712863789,
+        "per_class": {
+          "Low": {
+            "precision": 0.7105263157894737,
+            "recall": 0.6585365853658537,
+            "f1-score": 0.6835443037974683,
+            "support": 41.0
+          },
+          "Medium": {
+            "precision": 0.5882352941176471,
+            "recall": 0.6451612903225806,
+            "f1-score": 0.6153846153846154,
+            "support": 31.0
+          },
+          "High": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1-score": 0.0,
+            "support": 0.0
+          },
+          "accuracy": 0.6527777777777778,
+          "macro avg": {
+            "precision": 0.4329205366357069,
+            "recall": 0.43456595856281144,
+            "f1-score": 0.43297630639402795,
+            "support": 72.0
+          },
+          "weighted avg": {
+            "precision": 0.6578732370141039,
+            "recall": 0.6527777777777778,
+            "f1-score": 0.6541977712863789,
+            "support": 72.0
+          }
+        },
+        "confusion_matrix": [
+          [
+            27,
+            14,
+            0
+          ],
+          [
+            11,
+            20,
+            0
+          ],
+          [
+            0,
+            0,
+            0
+          ]
+        ],
+        "class_order": [
+          "Low",
+          "Medium",
+          "High"
+        ]
+      },
+      "H003": {
+        "records": 72,
+        "accuracy": 0.7777777777777778,
+        "macro_f1": 0.4048309178743961,
+        "weighted_f1": 0.7321256038647344,
+        "per_class": {
+          "Low": {
+            "precision": 0.6666666666666666,
+            "recall": 0.23529411764705882,
+            "f1-score": 0.34782608695652173,
+            "support": 17.0
+          },
+          "Medium": {
+            "precision": 0.7878787878787878,
+            "recall": 0.9629629629629629,
+            "f1-score": 0.8666666666666667,
+            "support": 54.0
+          },
+          "High": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1-score": 0.0,
+            "support": 1.0
+          },
+          "accuracy": 0.7777777777777778,
+          "macro avg": {
+            "precision": 0.48484848484848486,
+            "recall": 0.39941902687000724,
+            "f1-score": 0.4048309178743961,
+            "support": 72.0
+          },
+          "weighted avg": {
+            "precision": 0.7483164983164983,
+            "recall": 0.7777777777777778,
+            "f1-score": 0.7321256038647344,
+            "support": 72.0
+          }
+        },
+        "confusion_matrix": [
+          [
+            4,
+            13,
+            0
+          ],
+          [
+            2,
+            52,
+            0
+          ],
+          [
+            0,
+            1,
+            0
+          ]
+        ],
+        "class_order": [
+          "Low",
+          "Medium",
+          "High"
+        ]
+      },
+      "H004": {
+        "records": 72,
+        "accuracy": 0.7916666666666666,
+        "macro_f1": 0.5195778004766769,
+        "weighted_f1": 0.7894960844399047,
+        "per_class": {
+          "Low": {
+            "precision": 0.8043478260869565,
+            "recall": 0.8604651162790697,
+            "f1-score": 0.8314606741573034,
+            "support": 43.0
+          },
+          "Medium": {
+            "precision": 0.7692307692307693,
+            "recall": 0.6896551724137931,
+            "f1-score": 0.7272727272727273,
+            "support": 29.0
+          },
+          "High": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1-score": 0.0,
+            "support": 0.0
+          },
+          "accuracy": 0.7916666666666666,
+          "macro avg": {
+            "precision": 0.5245261984392419,
+            "recall": 0.516706762897621,
+            "f1-score": 0.5195778004766769,
+            "support": 72.0
+          },
+          "weighted avg": {
+            "precision": 0.7902034559643256,
+            "recall": 0.7916666666666666,
+            "f1-score": 0.7894960844399047,
+            "support": 72.0
+          }
+        },
+        "confusion_matrix": [
+          [
+            37,
+            6,
+            0
+          ],
+          [
+            9,
+            20,
+            0
+          ],
+          [
+            0,
+            0,
+            0
+          ]
+        ],
+        "class_order": [
+          "Low",
+          "Medium",
+          "High"
+        ]
+      },
+      "H005": {
+        "records": 72,
+        "accuracy": 0.7916666666666666,
+        "macro_f1": 0.450046685340803,
+        "weighted_f1": 0.7591036414565826,
+        "per_class": {
+          "Low": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1-score": 0.0,
+            "support": 4.0
+          },
+          "Medium": {
+            "precision": 0.8253968253968254,
+            "recall": 0.9285714285714286,
+            "f1-score": 0.8739495798319328,
+            "support": 56.0
+          },
+          "High": {
+            "precision": 0.5555555555555556,
+            "recall": 0.4166666666666667,
+            "f1-score": 0.47619047619047616,
+            "support": 12.0
+          },
+          "accuracy": 0.7916666666666666,
+          "macro avg": {
+            "precision": 0.4603174603174603,
+            "recall": 0.44841269841269843,
+            "f1-score": 0.450046685340803,
+            "support": 72.0
+          },
+          "weighted avg": {
+            "precision": 0.7345679012345678,
+            "recall": 0.7916666666666666,
+            "f1-score": 0.7591036414565826,
+            "support": 72.0
+          }
+        },
+        "confusion_matrix": [
+          [
+            0,
+            4,
+            0
+          ],
+          [
+            0,
+            52,
+            4
+          ],
+          [
+            0,
+            7,
+            5
+          ]
+        ],
+        "class_order": [
+          "Low",
+          "Medium",
+          "High"
+        ]
+      }
+    },
+    "development_permutation_importance": {
+      "hospital_id": 0.006330545179966118,
+      "patient_volume": 5.0412949924527606e-05,
+      "incoming_referrals": -0.0003971624870036661,
+      "pending_referrals": -0.0025825917648958363,
+      "available_beds": 0.004179979336759843,
+      "total_beds": 0.005066751847166651,
+      "workload_level": 0.07582990008961071,
+      "bed_occupancy_rate": -0.0010001491082284875,
+      "pending_per_bed": 3.412715008394018e-05,
+      "referral_to_patient_ratio": 0.001448935245862093,
+      "previous_patient_volume": 0.0057754416457383995,
+      "previous_incoming_referrals": -0.0007589499531178712,
+      "previous_pending_referrals": -0.0016901297961586237,
+      "previous_available_beds": -0.0017554892732827287,
+      "previous_workload_level": -0.005728356374652521,
+      "average_3day_patient_volume": -0.004056128560871453,
+      "average_7day_patient_volume": 0.005008027671819515,
+      "average_3day_pending_referrals": -0.0003353401526592914,
+      "average_7day_pending_referrals": 0.007156290853732705,
+      "average_3day_incoming_referrals": 0.0042513769413207725,
+      "average_7day_incoming_referrals": 0.00446918413192221,
+      "average_3day_available_beds": 0.0012426532208312246,
+      "average_7day_available_beds": 0.009741827349026011,
+      "patient_volume_trend": 0.0043409014150029845,
+      "pending_referrals_trend": 0.0,
+      "next_day_of_week": 0.005044665550027916,
+      "next_day_month": -0.0030866986054894907
+    },
+    "engineering_gates": {
+      "minimum_per_class_support": 10,
+      "minimum_per_class_recall": 0.2,
+      "required_macro_f1_gain_over_baseline": 0.01,
+      "passed": false,
+      "note": "Development gates require operational review; not clinical acceptance criteria."
+    }
+  }
+}

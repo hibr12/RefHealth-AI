@@ -1,0 +1,16 @@
+node_modules/
+backend/generated/
+dist/
+.env
+.env.*
+!.env.example
+venv/
+__pycache__/
+*.pyc
+.local/
+coverage/
+test-results/
+playwright-report/
+*.db
+*.sqlite
+*.tsbuildinfo

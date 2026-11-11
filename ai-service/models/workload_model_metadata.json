@@ -1,0 +1,7 @@
+{
+    "model_version": "workload_random_forest_feature_engineered_tuned_v1",
+    "model_type": "RandomForestClassifier",
+    "feature_count": 18,
+    "model_status": "experimental",
+    "description": "Feature-engineered tuned hospital workload prediction model"
+}
